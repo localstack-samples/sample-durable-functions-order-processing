@@ -1,0 +1,8 @@
+{
+  "order_id": "ORD-1001",
+  "customer_email": "jane@example.com",
+  "items": [
+    { "sku": "KB-MECH-87", "quantity": 1, "unit_price_cents": 8900 },
+    { "sku": "MOUSE-TRK-2", "quantity": 2, "unit_price_cents": 2450 }
+  ]
+}
