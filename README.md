@@ -76,6 +76,7 @@ CB=$(awslocal dynamodb get-item --table-name orders \
 
 awslocal lambda send-durable-execution-callback-success \
   --callback-id "$CB" \
+  --cli-binary-format raw-in-base64-out \
   --result '{"payment_status": "captured", "gateway_ref": "pg-91c7"}'
 ```
 

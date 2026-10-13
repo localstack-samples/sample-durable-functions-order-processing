@@ -84,6 +84,7 @@ fi
 
 CALLBACK_ID=$(order_attr callback_id.S)
 lstk aws lambda send-durable-execution-callback-success --callback-id "$CALLBACK_ID" \
+  --cli-binary-format raw-in-base64-out \
   --result '{"payment_status": "captured", "gateway_ref": "pg-91c7"}'
 echo "Sent the payment confirmation"
 
