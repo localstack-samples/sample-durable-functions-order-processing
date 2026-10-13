@@ -1,0 +1,64 @@
+name: Deploy on LocalStack
+
+on:
+  push:
+    paths-ignore:
+      - 'README.md'
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  cdk:
+    name: Run an order through the durable workflow
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install lstk and the CDK CLI
+        run: |
+          npm install -g @localstack/lstk aws-cdk
+          lstk setup aws --force --non-interactive
+          aws --version
+
+      - name: Build the Lambda package and the CDK virtualenv
+        run: |
+          ./build.sh
+          python3.13 -m venv .venv
+          .venv/bin/pip install -r requirements.txt
+
+      - name: Start LocalStack with persistence
+        env:
+          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+        run: lstk start --persist
+
+      - name: Deploy the stack
+        run: |
+          lstk cdk bootstrap
+          lstk cdk deploy --require-approval never
+
+      - name: Run tests
+        env:
+          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+          # Restart while the execution waits for the callback, as the README suggests
+          RESTART_CMD: lstk restart
+        run: ./test.sh
+
+      - name: Show LocalStack logs
+        if: failure()
+        run: lstk logs | tail -300
