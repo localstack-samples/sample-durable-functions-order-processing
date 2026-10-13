@@ -76,6 +76,7 @@ CB=$(awslocal dynamodb get-item --table-name orders \
 
 awslocal lambda send-durable-execution-callback-success \
   --callback-id "$CB" \
+  --cli-binary-format raw-in-base64-out \
   --result '{"payment_status": "captured", "gateway_ref": "pg-91c7"}'
 ```
 
@@ -90,6 +91,19 @@ awslocal sqs receive-message \
   --max-number-of-messages 10 --query 'Messages[].Body'
 ```
 
+## Test
+
+`test.sh` runs a fresh order through the steps above and checks the payment
+attempts, the parked callback, the final result, the execution history, the
+DynamoDB record and both notifications. Set `RESTART_CMD` to restart
+LocalStack while the execution waits for the callback:
+
+```bash
+RESTART_CMD="lstk restart" ./test.sh
+```
+
+CI runs the same test on every pull request.
+
 ## Layout
 
 ```
@@ -98,4 +112,5 @@ stacks/order_processing_stack.py    DynamoDB + SNS + SQS + durable Lambda
 functions/order_processor/          handler and its requirements
 build.sh                            packages the handler with the durable SDK
 events/order.json                   sample order payload
+test.sh                             end-to-end test, run by CI
 ```
